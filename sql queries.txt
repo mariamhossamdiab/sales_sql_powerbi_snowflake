@@ -1,0 +1,323 @@
+--1)Which customers placed the most orders
+select top 5 concat(C.FIRSTNAME,' ',C.LASTNAME) as fullname,F.CUSTOMERID , count(*)as totalorder
+from DIMCUSTOMERdata C inner join FACT F
+on C.CUSTOMERID=F.CUSTOMERID
+group by C.FIRSTNAME,C.LASTNAME,F.CUSTOMERID
+order by totalorder DESC;
+----
+--2)What is the average customer spend per order?
+SELECT 
+    AVG(f.totalamount) AS avg_spend_per_order
+FROM 
+    FACT f
+JOIN 
+    dimcustomerdata c ON f.customerid = c.customerid
+
+
+--3)Determines how much customers typically spend. 
+SELECT
+    C.FIRSTNAME,
+    F.CUSTOMERID,
+    AVG(TOTALAMOUNT) AS AvgSpendPerCustomer
+FROM FACT F
+JOIN DIMCUSTOMERDATA C ON F.CUSTOMERID = C.CUSTOMERID
+GROUP BY F.CUSTOMERID , C.FIRSTNAME
+ORDER BY AvgSpendPerCustomer DESC;
+//4)Which customers have made only one purchase?
+SELECT 
+    dc.FIRSTNAME,
+    COUNT(*) AS OrderCount
+FROM FACT f
+JOIN DIMCUSTOMERDATA dc ON f.CUSTOMERID = dc.CUSTOMERID
+GROUP BY f.CUSTOMERID,dc.FIRSTNAME
+HAVING COUNT(*) = 1;
+
+//5)Who are the most loyal customers based on repeat purchases?
+SELECT 
+    dc.FIRSTNAME,COUNT(*) AS TotalOrders
+FROM FACT f
+JOIN DIMCUSTOMERDATA dc ON f.CUSTOMERID = dc.CUSTOMERID
+join dimloyaltyinfo dl on dc.loyaltyprogramid=dl.loyaltyprogramid
+where dl.loyaltyprogramid=5
+GROUP BY f.CUSTOMERID ,dc.FIRSTNAME
+ORDER BY TotalOrders desc
+limit 5
+
+
+--6) What are the top-selling products? 
+SELECT
+    DP.ProductName,
+    SUM(F.QUANTITYORDERDED) AS TotalQuantitySold
+FROM 
+    FACT F
+JOIN 
+    DIMPRODUCTDATA DP ON F.ProductID = DP.ProductID
+GROUP BY
+    DP.ProductName
+ORDER BY
+    TotalQuantitySold DESC
+LIMIT 5;
+
+--7)Which products are underperforming? 
+SELECT
+    DP.ProductName,
+    SUM(F.QUANTITYORDERDED) AS TotalQuantitySold
+FROM 
+    FACT F
+JOIN 
+    DIMPRODUCTDATA DP ON F.ProductID = DP.ProductID
+GROUP BY
+    DP.ProductName
+ORDER BY
+    TotalQuantitySold ASC
+LIMIT 5;
+--8) What are the best-selling product categories?
+SELECT
+    DP.CATEGORY,
+    SUM(F.QUANTITYORDERDED) AS TotalQuantitySold
+FROM 
+    FACT F
+JOIN 
+    DIMPRODUCTDATA DP ON F.ProductID = DP.ProductID
+GROUP BY
+    DP.CATEGORY
+ORDER BY
+    TotalQuantitySold DESC
+LIMIT 1;
+-- 9)Which products need stock replenishment? 
+--can't be calculated becuse of lake of data columns
+
+--10)Which product category contributes most to revenue? 
+SELECT
+DP.CATEGORY,
+SUM (F. TOTALAMOUNT) AS TOTALREVENUE
+FROM
+FACT F
+JOIN DIMPRODUCTDATA DP ON F.ProductID = DP.ProductID
+GROUP BY
+DP.CATEGORY
+ORDER BY
+TOTALREVENUE DESC
+LIMIT 1;
+--11) Which store has the highest revenue? 
+ SELECT
+DS. STORENAME,
+SUM (F. TOTALAMOUNT) AS TOTALREVENUE
+FROM
+ FACT F
+JOIN dimstoredata DS ON F.STOREID = DS.STOREID
+GROUP BY
+DS. STORENAME
+ORDER BY
+TOTALREVENUE DESC
+LIMIT 1;
+
+--12)What is the average transaction value per store? 
+ SELECT
+DS. STORENAME,
+AVG (F. TOTALAMOUNT) average_transaction
+FROM
+ FACT F
+JOIN dimstoredata DS ON F.STOREID = DS.STOREID
+GROUP BY
+DS. STORENAME
+ORDER BY
+average_transaction DESC
+LIMIT 1;
+
+--13) Which region generates the most revenue? 
+ SELECT
+DS.REGION,
+SUM (F. TOTALAMOUNT) TOTALREVENUE
+FROM
+ FACT F
+JOIN dimstoredata DS ON F.STOREID = DS.STOREID
+GROUP BY
+DS.REGION
+ORDER BY
+TOTALREVENUE DESC
+LIMIT 1;
+
+--14)What is the profit margin per region? 
+ SELECT
+DS.REGION,
+SUM (F. TOTALAMOUNT-F.SHIPPINGCOST) profit_margin
+FROM
+ FACT F
+JOIN dimstoredata DS ON F.STOREID = DS.STOREID
+GROUP BY
+DS.REGION
+ORDER BY
+profit_margin DESC
+LIMIT 4;
+
+--15)Monthly revenue trends over the last year 
+SELECT
+DD. YEAR,
+DD. MONTH,
+SUM(F. TOTALAMOUNT) AS MonthlyRevenue
+FROM FACT F
+JOIN DIMDATE DD ON F.DATEID = DD.DATEID
+WHERE
+DD. YEAR = 2024
+GROUP BY
+DD. YEAR,
+DD. MONTH
+ORDER BY
+DD.MONTH;
+--16)Year-over-Year Sales Growth 
+WITH YearlyRevenue AS (
+    SELECT
+        DD.YEAR,
+        SUM(F.TOTALAMOUNT) AS YearlyRevenue
+    FROM FACT F
+    JOIN DIMDATE DD ON F.DATEID = DD.DATEID
+    GROUP BY DD.YEAR
+)
+SELECT
+    Y1.YEAR,
+    Y1.YearlyRevenue,
+    Y0.YearlyRevenue AS PreviousYearRevenue,
+    CASE 
+        WHEN Y0.YearlyRevenue IS NULL THEN NULL
+        ELSE ROUND(((Y1.YearlyRevenue - Y0.YearlyRevenue) * 100.0) / Y0.YearlyRevenue, 2)
+    END AS YoY_Growth_Percentage
+FROM YearlyRevenue Y1
+LEFT JOIN YearlyRevenue Y0 ON Y1.YEAR = Y0.YEAR + 1
+ORDER BY Y1.YEAR;
+
+--17) Hourly sales distribution ? 
+--can't be calculated becuse of lake of data columns
+--18) Profitability by product? 
+--can't be calculated becuse of lake of data columns
+--19) Profit margin comparison between categories ?
+--can't be calculated becuse of lake of data columns
+
+--20) Age-wise purchase patterns 
+SELECT 
+case 
+when DATEDIFF ('year', DC.DOB, CURRENT_DATE()) BETWEEN 0 AND 18 THEN '0-18' 
+WHEN DATEDIFF ('year', DC.DOB, CURRENT_DATE()) BETWEEN 19 AND 25 THEN '19-25'
+WHEN DATEDIFF ('year', DC.DOB, CURRENT_DATE()) BETWEEN 26 AND 45 THEN '26-45' 
+WHEN DATEDIFF ('year', DC.DOB, CURRENT_DATE()) BETWEEN 46 AND 60 THEN '46-40'
+WHEN DATEDIFF ('year', DC.DOB, CURRENT_DATE()) > 60 THEN '60+' ELSE 'UNKNOWN'
+END AS AgeGroup,
+COUNT (F.OrderID) AS TotalOrders,
+SUM (F. TOTALAMOUNT) AS TOTALREVENUE
+FROM FACT F
+JOIN DIMCUSTOMERDATA DC ON F.CustomerID = DC.CustomerID
+GROUP BY
+AgeGroup
+ORDER BY
+AgeGroup;
+--21. How does the yearly revenue trend compare across different years? 
+  SELECT
+        DD.YEAR,
+        SUM(F.TOTALAMOUNT) AS YearlyRevenue
+    FROM FACT F
+    JOIN DIMDATE DD ON F.DATEID = DD.DATEID
+    GROUP BY DD.YEAR
+    order BY DD.YEAR
+--22. What is the peak sales hour in a typical day?
+--can't be calculated
+--23. Whichstore has the highest number of transactions per day?
+SELECT
+DD.DATE,
+DS. STORENAME,
+COUNT (F. ORDERID) AS TransactionNumber
+FROM FACT F
+join dimstoredata DS ON F.STOREID = DS. STOREID
+join DIMDATE DD ON F.DATEID = DD.DATEID
+GROUP BY
+DD.DATE,
+DS.STORENAME
+ORDER BY
+TransactionNumber DESC
+LIMIT 1;
+--24. What is the total discount amount given to customers in the last quarter?
+SELECT
+SUM(F.DISCOUNTAMOUNT) AS TotalDiscount
+from FACT F
+join DIMDATE DD ON F.DATEID = DD.DATEID
+WHERE
+DD.year = 2024 --(SELECT MAX(Year) FROM DIMDATE) for dynamic latest year 
+AND DD.QUARTER = (SELECT MAX(QUARTER) FROM DIMDATE WHERE YEAR = 2024); 
+--subquery for dynamic latest quarter]
+--25. Which product has the highest return rate? 
+--can't be calculated
+
+--26. How does the revenue vary across weekdays versus weekends? 
+select d.isweekend,
+sum(f.totalamount)
+from fact f
+join dimDate d on f.dateid=d.dateid
+group by d.isweekend
+
+--27. What is the best-selling product for each region? 
+WITH RegionalProduct AS (
+    SELECT
+        DS.REGION,
+        DP.PRODUCTNAME,
+        SUM(F.QUANTITYORDERDED) AS TotalQuantitySold,
+        ROW_NUMBER() OVER (
+            PARTITION BY DS.REGION 
+            ORDER BY SUM(F.QUANTITYORDERDED) DESC
+        ) AS rn
+    FROM FACT F
+    JOIN DIMPRODUCTDATA DP ON F.ProductID = DP.ProductID
+    JOIN DIMSTOREDATA DS ON F.STOREID = DS.STOREID
+    GROUP BY DS.REGION, DP.PRODUCTNAME
+)
+SELECT
+    REGION,
+    PRODUCTNAME,
+    TotalQuantitySold
+FROM RegionalProduct
+WHERE rn = 1
+ORDER BY REGION;
+
+--28. Which customer segment generates the highest revenue?
+ SELECT
+DLI.PROGRAMNAME,
+SUM (F.TOTALAMOUNT) AS TOTALREVENUE
+from FACT F
+join DIMCUSTOMERDATA DC ON F.CustomerID = DC.CustomerID
+join DIMLOYALTYINFO DLI ON DC.LoyaltyProgramID = DLI.LoyaltyProgramID
+GROUP BY
+DLI.PROGRAMNAME
+ORDER BY
+TOTALREVENUE DESC;
+--29. What is the profit-to-revenue ratio for different product categories? 
+--can't be calculated
+
+-- 30) Which product saw the highest percentage increase in sales compared to the previous year? 
+WITH ProductYear AS (
+SELECT DP.PRODUCTNAME,
+DD.Year,
+SUM(FO.QUANTITYORDERDED) AS YearlyQuantity
+from FACT FO
+JOIN DIMDATE DD ON FO.DATEID= DD.DATEID
+JOIN DIMPRODUCTDATA DP ON FO.ProductID = DP.ProductID
+GROUP BY
+DP.PRODUCTNAME,
+DD. YEAR ),
+ProductPreviousYear AS (
+SELECT
+PRODUCTNAME,
+YEAR,
+YearlyQuantity,
+LAG (YearlyQuantity, 1) OVER (PARTITION BY PRODUCTNAME ORDER BY YEAR) AS PreviousYearQuantity FROM
+ProductYear
+)
+SELECT
+YEAR,
+PRODUCTNAME,
+YearlyQuantity,
+PreviousYearQuantity,
+(YearlyQuantity - PreviousYearQuantity) *100.0/ (PreviousYearQuantity) AS PercentageIncrease
+from ProductPreviousYear
+WHERE PreviousYearQuantity IS NOT NULL AND PreviousYearQuantity != 0 
+ORDER BY PercentageIncrease DESC;
+
+
+
