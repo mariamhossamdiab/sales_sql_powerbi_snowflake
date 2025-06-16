@@ -3,4 +3,6 @@
 ![sales by time](https://github.com/user-attachments/assets/f77aa722-15a3-4037-bbee-33c7a6ddc529)
 ![customer page](https://github.com/user-attachments/assets/f99ca19a-0919-4f4b-a738-ed93359db041)
 ![image](https://github.com/user-attachments/assets/554057f6-bf4c-4d79-8414-31dcd6e080e8)
+![snowflake](https://github.com/user-attachments/assets/ff1bfc0a-9544-419a-9853-5d8a4b1bf1e4)
+
 
