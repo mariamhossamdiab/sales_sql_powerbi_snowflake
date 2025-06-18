@@ -1,5 +1,5 @@
 # overview :
-# made data visualization and analysis and ETL from snowflake DWH and extracted new insights , answered questions , scanned trend analysis ,star schema  
+### made data visualization and analysis and ETL from snowflake DWH and extracted new insights , answered questions , scanned trend analysis ,star schema  
 # Technologies : 
  ### sql , power bi , snowflake
 ![sales by time](https://github.com/user-attachments/assets/f77aa722-15a3-4037-bbee-33c7a6ddc529)
