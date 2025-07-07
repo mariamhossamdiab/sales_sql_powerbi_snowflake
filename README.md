@@ -1,4 +1,5 @@
 # overview :
+This project leverages Sales data analysis by integrating SQL queries, Power BI dashboards, and Snowflake's cloud data warehousing to deliver real-time business insights and support data-driven decision-making.
 ### made data visualization and analysis and ETL from snowflake DWH and extracted new insights , answered questions , scanned trend analysis ,star schema  
 # Technologies : 
  ### sql , power bi , snowflake
